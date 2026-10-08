@@ -1,3 +1,4 @@
+import Hero from '@/components/Hero'
 import ProductSection from '@/components/ProductSection'
 import { getAllProducts, getTopFallers, getTopRisers } from '@/lib/api'
 
@@ -10,6 +11,7 @@ export default async function Home() {
 
   return (
     <>
+      <Hero />
       <ProductSection title="আজ দাম বেড়েছে ▲" products={risers} />
       <ProductSection title="আজ দাম কমেছে ▼" products={fallers} />
       <ProductSection
