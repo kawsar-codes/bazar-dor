@@ -1,5 +1,17 @@
 # Assignment-7 — বাজার দর (BazarDor)
 
+**Deadlines:** 60 marks — 10 October, 11:59 PM · 50 marks — 11 October, 11:59 PM ·
+30 marks — any time after 11 October.
+
+**Basic requirements:** responsive on all screen sizes · at least 8 meaningful git commits ·
+no errors after deployment · README with name, description, technologies and at least 5
+features.
+
+## API
+- Base URL 1: `https://api.api-store.workers.dev/api/bazardor`
+- Base URL 2 (alternative): `https://api.abcz.workers.dev/api/bazardor`
+- Endpoints: `/products`, `/products?category=chal`, `/products/1`, `/categories`, `/categories/chal`
+
 ## 1. Navbar
 - Match the Figma.
 - Left: logo 🛒 **বাজার দর** with the Bangla date underneath.

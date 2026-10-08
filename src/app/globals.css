@@ -1,35 +1,77 @@
 @import 'tailwindcss';
 @plugin 'daisyui' {
-  themes: light --default;
+  themes: false;
 }
 
 /* ------------------------------------------------------------------
-   BRAND THEME — the whole site is themed from the tokens below.
-   Change these and the logo, buttons and badges re-theme together.
-   Match them to the Figma before final submission.
+   BAZARDOR THEME — values taken from the Figma file's design tokens
+   ("Bazardor/Color/Light"). daisyUI classes like btn-primary, bg-base-200,
+   text-base-content and badge-success all read from here, so the whole
+   site re-themes from this one block.
 ------------------------------------------------------------------ */
-@theme {
-  --color-brand: #0f766e; /* teal-700 — logo, primary buttons, active link */
-  --color-brand-dark: #115e59;
-  --color-brand-soft: #ccfbf1;
+@plugin 'daisyui/theme' {
+  name: 'bazardor';
+  default: true;
+  prefersdark: false;
+  color-scheme: light;
 
-  --color-up: #16a34a; /* দাম বেড়েছে  ▲ */
-  --color-up-soft: #dcfce7;
-  --color-down: #dc2626; /* দাম কমেছে  ▼ */
-  --color-down-soft: #fee2e2;
-  --color-flat: #6b7280; /* অপরিবর্তিত — */
-  --color-flat-soft: #f3f4f6;
+  --color-base-100: #fafcfa;
+  --color-base-200: #f0f5f0;
+  --color-base-300: #e1e8e1;
+  --color-base-content: #1d271f;
+
+  --color-primary: #05893e;
+  --color-primary-content: #f3fbf4;
+  --color-secondary: #047f39;
+  --color-secondary-content: #f3fbf4;
+  --color-accent: #02642b;
+  --color-accent-content: #f3fbf4;
+  --color-neutral: #1d271f;
+  --color-neutral-content: #fafcfa;
+
+  --color-success: #1a9951;
+  --color-success-content: #f3fbf4;
+  --color-error: #d03739;
+  --color-error-content: #fff6f5;
+  --color-info: #047f39;
+  --color-info-content: #f3fbf4;
+  --color-warning: #b45309;
+  --color-warning-content: #fffbeb;
+
+  --radius-selector: 0.5rem;
+  --radius-field: 0.5rem;
+  --radius-box: 0.75rem;
+}
+
+/* Extra tokens from the Figma that daisyUI has no slot for.
+   Use them as text-up, bg-down-soft, border-hover-neutral, etc. */
+@theme {
+  --color-primary-strong: #047f39;
+  --color-hover-link: #02642b;
+  --color-hover-primary-border: #037333;
+  --color-hover-neutral-bg: #dadeda;
+  --color-hover-neutral-border: #ccd0cc;
+  --color-hover-error-bg: #bd3133;
+  --color-hover-error-border: #b02d2f;
+
+  /* price change badges — green up, red down, grey flat */
+  --color-up: #1a9951;
+  --color-up-soft: #f3fbf4;
+  --color-down: #d03739;
+  --color-down-soft: #fff6f5;
+  --color-flat: #6b756d;
+  --color-flat-soft: #f0f5f0;
 
   --font-sans: var(--font-bangla), ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
-  @apply font-sans text-slate-700 antialiased;
+  @apply bg-base-100 font-sans text-base-content antialiased;
 }
 
-/* Infinite price ticker used under the navbar.
-   Two identical copies of the strip sit side by side and the track slides
-   exactly half its width, so the loop never shows a gap. */
+/* Infinite price ticker under the navbar.
+   Render the strip TWICE inside .ticker-track; the track slides exactly half
+   its own width, so the second copy lands where the first began — no gap. */
 @keyframes ticker-scroll {
   from {
     transform: translateX(0);
@@ -42,7 +84,11 @@ body {
 @utility ticker-track {
   display: flex;
   width: max-content;
-  animation: ticker-scroll 40s linear infinite;
+  animation: ticker-scroll 45s linear infinite;
+}
+
+.ticker-track:hover {
+  animation-play-state: paused;
 }
 
 @media (prefers-reduced-motion: reduce) {

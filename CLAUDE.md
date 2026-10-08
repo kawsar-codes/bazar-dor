@@ -17,17 +17,25 @@ BetterAuth · MongoDB (Atlas) · react-hot-toast
 
 ## Things that are easy to get wrong here
 
-- **Store numbers, render Bengali digits.** Prices live in `src/data/products.json` as plain
-  numbers. Convert only at render time with the helpers in `src/lib/bn.ts`
-  (`formatPrice`, `formatChange`, `toBengaliDigits`). Never store "১৪৮" as a string — the sort
-  dropdown (challenge C1) must compare numbers, and `Math.min`/`Math.max` must work.
+- **Data comes from the assignment's API, not a local file.** Always go through
+  `src/lib/api.ts` — never call `fetch` on the API URL directly from a component.
+- **Numbers stay numbers until render.** The API returns prices as plain numbers. Convert only
+  at render time with `src/lib/bn.ts` (`formatPrice`, `formatChange`, `perUnit`,
+  `priceWithUnit`). Never sort the converted Bengali strings — challenge C1 must sort on the
+  numeric `today` field.
+- **`change.pct` can be negative.** For a falling price the API sends `dir: "down"` with a
+  negative `pct`. Always decide the arrow/colour from `change.dir` and display
+  `Math.abs(pct)` — `formatChange(dir, pct)` already does this.
+- **`unit` is a Latin code** (`kg`, `litre`, `dozen`, `piece`). Never show it raw — use
+  `perUnit(unit)` → "প্রতি কেজি" or `unitLabel(unit)` → "কেজি".
 - **Tailwind is v4, not v3.** There is no `tailwind.config.js` and no `content` array.
   Everything is configured inside `src/app/globals.css` with `@import 'tailwindcss'`,
   `@plugin 'daisyui'`, `@theme` and `@utility`.
-- **The brand colours live in exactly one place** — the `@theme` block of `globals.css`
-  (`--color-brand`, `--color-up`, `--color-down`, `--color-flat`). Use `text-brand`,
-  `bg-up-soft` etc. Never hardcode a hex value in a component. Match these tokens to the
-  Figma before submitting.
+- **Colours come from the Figma and live in one place** — `src/app/globals.css`. The custom
+  daisyUI theme `bazardor` holds the Figma's tokens, so use daisyUI classes
+  (`btn-primary`, `bg-base-200`, `text-base-content`, `badge-success`) for most things.
+  Change badges use the extra tokens `text-up` / `bg-up-soft`, `text-down` / `bg-down-soft`,
+  `text-flat` / `bg-flat-soft`. Never hardcode a hex value in a component.
 - **`banglaDate()` must run in `useEffect`**, inside a client component. Calling it during
   render on both server and client causes a React hydration mismatch, because the server and
   the browser can be on different days.
@@ -43,14 +51,31 @@ BetterAuth · MongoDB (Atlas) · react-hot-toast
 
 ## Data
 
-- `src/data/products.json` — 26 products, each with `slug, emoji, name, category,
-  categorySlug, unit, price, change, summary, tags, min, max, avg, bazars[]`.
-- `src/data/categories.json` — 8 categories (`chal, shobji, mach, mangsho, dim, dal, tel, moshla`).
-- `src/lib/products.ts` — typed async accessors (`getAllProducts`, `getProductBySlug`,
-  `getTopRisers`, `getTopFallers`, `getProductsByCategory`, `getCategories`,
-  `getCategoryBySlug`). They include a small artificial delay so the loading skeletons are
-  actually visible — that is intentional.
-- `src/lib/bn.ts` — Bengali digits, price formatting, change badge text, Bangla date.
+API base: `https://api.api-store.workers.dev/api/bazardor`
+(fallback `https://api.abcz.workers.dev/api/bazardor` — `api.ts` tries both automatically).
+
+| Endpoint | Returns |
+| --- | --- |
+| `/products` | array of 33 products |
+| `/products?category=chal` | products in one category |
+| `/products/1` | one product by numeric **id** (our routes use slug, so use `getProductBySlug`) |
+| `/categories` | array of 8 categories |
+| `/categories/chal` | one category |
+
+Product fields: `id, slug, nameBn, category` (slug)`, categoryNameBn, categoryIcon, unit,
+image` (emoji)`, today, yesterday, lastWeek, lastMonth, change { dir, pct }, markets[]`.
+Each market: `market, division, min, max` — 12 markets per product.
+
+Category fields: `id, slug, nameBn, icon`. Slugs: `chal, dal, tel, sobji, mach, mangsho,
+dim-dui, mosla`.
+
+`src/lib/api.ts` exposes `getAllProducts`, `getProductsByCategory`, `getProductBySlug`,
+`getCategories`, `getCategoryBySlug`, `getTopRisers`, `getTopFallers`, and `marketStats`
+(min / max / average across all markets, for the detail page).
+
+Images: the hero illustration is `public/hero-basket.png`; a small cart icon is
+`public/logo-cart.png`. The design (Figma) is not in the repo — ask Kawsar for a screenshot
+of the page you are working on before building it.
 
 ## Conventions
 

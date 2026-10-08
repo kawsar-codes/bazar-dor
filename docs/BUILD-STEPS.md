@@ -40,11 +40,11 @@ npm run dev
 > and wire them into src/app/layout.tsx so every page gets them.
 > Navbar: sticky, logo 🛒 বাজার দর on the left with today's Bangla date underneath (use
 > banglaDate from src/lib/bn.ts inside useEffect in a client component to avoid a hydration
-> mismatch), category links from src/data/categories.json in the middle with the active one
+> mismatch), category links from getCategories() in src/lib/api.ts in the middle with the active one
 > highlighted, and সাইন ইন / সাইন আপ buttons on the right. On mobile collapse the links into
 > a hamburger menu.
 > Ticker: an infinite marquee strip under the navbar showing every product as
-> emoji + name + price + change badge, using the `ticker-track` utility already in
+> image (emoji) + nameBn + priceWithUnit(today, unit) + formatChange(change.dir, change.pct), using the `ticker-track` utility already in
 > globals.css — render the strip twice inside the track so the loop has no gap.
 > Footer: বাজার দর — প্রয়োজনীয় পণ্যের দাম এক নজরে। on the left and
 > সকল দাম সম্ভাব্য; বাজার অবস্থার ওপর নির্ভর করে পরিবর্তিত হয়। on the right.
@@ -62,10 +62,10 @@ git add -A && git commit -m "feat: add navbar with bangla date, price ticker and
 
 **Prompt**
 
-> Now build the home page. First a reusable ProductCard component showing emoji, name, unit
-> line, আজকের দাম with the price in Bengali digits, and the change badge (▲ green, ▼ red,
-> — grey) — use formatPrice and formatChange from src/lib/bn.ts and the brand colour tokens,
-> never hardcoded hex. The whole card links to /product/[slug].
+> Now build the home page. First a reusable ProductCard component showing the emoji (image), nameBn, the unit line
+> via perUnit(unit), আজকের দাম with formatPrice(today) টাকা, and the change badge
+> (▲ green, ▼ red, — grey) via formatChange(change.dir, change.pct) — use the up/down/flat
+> colour tokens from globals.css, never hardcoded hex. The whole card links to /product/[slug].
 > Then three sections on the home page: আজ দাম বেড়েছে ▲ (getTopRisers), আজ দাম কমেছে ▼
 > (getTopFallers), and সব পণ্য with id="সব-পণ্য" (getAllProducts) in a responsive grid —
 > 1 column on mobile, 2 on tablet, 3–4 on desktop, inside a max-w-6xl container.
@@ -84,8 +84,8 @@ git add -A && git commit -m "feat: add product card and the three home page sect
 
 > Now add the Hero section at the top of the home page, above the three product sections.
 > It needs an eyebrow line, a main heading, a subtitle, a primary CTA button that is an
-> anchor link to #সব-পণ্য on the same page (not a route change), and an illustration on the
-> right. Stack it into one column on mobile. Keep all copy in Bangla and relevant to a
+> anchor link to #সব-পণ্য on the same page (not a route change), and the illustration
+> public/hero-basket.png on the right. Stack it into one column on mobile. Keep all copy in Bangla and relevant to a
 > market-price site.
 
 **Commit**
@@ -141,7 +141,8 @@ git add -A && git commit -m "feat: add sign in and sign up pages with social log
 > Now build /product/[slug] as a protected route — if there is no session, redirect to
 > /signin and show a toast explaining why. Follow docs/ASSIGNMENT.md section 4: emoji +
 > title, the summary line, category tags, unit, a price summary with সর্বনিম্ন / সর্বোচ্চ /
-> গড় দাম, and a বাজারভিত্তিক আজকের দাম table listing every bazar and its price.
+> গড় দাম from marketStats(product), and a বাজারভিত্তিক আজকের দাম section listing all 12
+> markets with their division and min–max price range.
 > An unknown slug must render the not-found page, never throw.
 
 **Commit**
@@ -176,7 +177,7 @@ git add -A && git commit -m "feat: add category page, 404 page and loading skele
 
 > Now add the sort control to the category page: a dropdown labelled সাজান with a chevron
 > icon and the options ডিফল্ট, দাম: কম থেকে বেশি, দাম: বেশি থেকে কম, defaulting to ডিফল্ট.
-> It is a client component. Sort on the numeric `price` field, never on the displayed
+> It is a client component. Sort on the numeric `today` field, never on the displayed
 > Bengali-digit string.
 
 **Commit**

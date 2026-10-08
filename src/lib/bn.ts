@@ -1,8 +1,10 @@
-/** Bengali number and date helpers.
+/** Bengali number, unit and date helpers.
  *
- *  Prices are stored as plain numbers in products.json and converted to
- *  Bengali digits only when they are rendered. Never store Bengali digits —
- *  sorting and min/max would then compare strings instead of numbers. */
+ *  The API returns prices as plain numbers. Convert them to Bengali digits only
+ *  when rendering. Never sort or compare the converted strings — challenge C1
+ *  requires sorting by numeric value. */
+
+import type { ChangeDir } from './api'
 
 const BENGALI_DIGITS = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯']
 
@@ -16,30 +18,40 @@ export function formatPrice(value: number): string {
   return toBengaliDigits(value.toLocaleString('en-US'))
 }
 
-/** 1850, "প্রতি কেজি" → "১,৮৫০ টাকা / কেজি" */
-export function formatPriceWithUnit(value: number, unit: string): string {
-  return `${formatPrice(value)} টাকা / ${unit.replace('প্রতি ', '')}`
+const UNIT_LABELS: Record<string, string> = {
+  kg: 'কেজি',
+  litre: 'লিটার',
+  liter: 'লিটার',
+  dozen: 'ডজন',
+  piece: 'পিস',
 }
 
-export type ChangeTone = 'up' | 'down' | 'flat'
-
-export function changeTone(change: number): ChangeTone {
-  if (change > 0) return 'up'
-  if (change < 0) return 'down'
-  return 'flat'
+/** "kg" → "কেজি" (falls back to the raw code if the API ever adds a new unit) */
+export function unitLabel(unit: string): string {
+  return UNIT_LABELS[unit] ?? unit
 }
 
-/** 2.1 → "▲ ২.১%" · -2.9 → "▼ ২.৯%" · 0 → "— ০.০%" */
-export function formatChange(change: number): string {
-  const arrow = change > 0 ? '▲' : change < 0 ? '▼' : '—'
-  return `${arrow} ${toBengaliDigits(Math.abs(change).toFixed(1))}%`
+/** "kg" → "প্রতি কেজি" — the unit line on every card */
+export function perUnit(unit: string): string {
+  return `প্রতি ${unitLabel(unit)}`
 }
 
-/** "বুধবার, ৮ অক্টোবর ২০২৬"
+/** 148, "kg" → "১৪৮ টাকা/কেজি" — used in the price ticker */
+export function priceWithUnit(value: number, unit: string): string {
+  return `${formatPrice(value)} টাকা/${unitLabel(unit)}`
+}
+
+/** up 2.1 → "▲ ২.১%" · down -2.9 → "▼ ২.৯%" · flat 0 → "— ০.০%" */
+export function formatChange(dir: ChangeDir, pct: number): string {
+  const arrow = dir === 'up' ? '▲' : dir === 'down' ? '▼' : '—'
+  return `${arrow} ${toBengaliDigits(Math.abs(pct).toFixed(1))}%`
+}
+
+/** "বুধবার, ৮ অক্টোবর, ২০২৬"
  *
- *  Call this inside useEffect in a client component, never during render on
- *  both server and client — the server and the browser can be on different
- *  days, and React would report a hydration mismatch. */
+ *  Call this inside useEffect in a client component — never during render on
+ *  both server and client. The server and the browser can be on different days
+ *  and React would report a hydration mismatch. */
 export function banglaDate(date: Date = new Date()): string {
   return new Intl.DateTimeFormat('bn-BD', {
     weekday: 'long',
