@@ -1,0 +1,52 @@
+@import 'tailwindcss';
+@plugin 'daisyui' {
+  themes: light --default;
+}
+
+/* ------------------------------------------------------------------
+   BRAND THEME — the whole site is themed from the tokens below.
+   Change these and the logo, buttons and badges re-theme together.
+   Match them to the Figma before final submission.
+------------------------------------------------------------------ */
+@theme {
+  --color-brand: #0f766e; /* teal-700 — logo, primary buttons, active link */
+  --color-brand-dark: #115e59;
+  --color-brand-soft: #ccfbf1;
+
+  --color-up: #16a34a; /* দাম বেড়েছে  ▲ */
+  --color-up-soft: #dcfce7;
+  --color-down: #dc2626; /* দাম কমেছে  ▼ */
+  --color-down-soft: #fee2e2;
+  --color-flat: #6b7280; /* অপরিবর্তিত — */
+  --color-flat-soft: #f3f4f6;
+
+  --font-sans: var(--font-bangla), ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  @apply font-sans text-slate-700 antialiased;
+}
+
+/* Infinite price ticker used under the navbar.
+   Two identical copies of the strip sit side by side and the track slides
+   exactly half its width, so the loop never shows a gap. */
+@keyframes ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@utility ticker-track {
+  display: flex;
+  width: max-content;
+  animation: ticker-scroll 40s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track {
+    animation: none;
+  }
+}
