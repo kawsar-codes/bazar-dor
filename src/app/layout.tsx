@@ -5,6 +5,7 @@ import Footer from '@/components/Footer'
 import Navbar from '@/components/Navbar'
 import PriceTicker from '@/components/PriceTicker'
 import { getCategories } from '@/lib/api'
+import { getSession } from '@/lib/session'
 import './globals.css'
 
 const bangla = Hind_Siliguri({
@@ -20,12 +21,12 @@ export const metadata: Metadata = {
 }
 
 export default async function RootLayout({ children }: LayoutProps<'/'>) {
-  const categories = await getCategories()
+  const [categories, session] = await Promise.all([getCategories(), getSession()])
 
   return (
     <html lang="bn" className={`${bangla.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
-        <Navbar categories={categories} />
+        <Navbar categories={categories} user={session?.user ?? null} />
         <PriceTicker />
         <main className="flex flex-1 flex-col">{children}</main>
         <Footer />

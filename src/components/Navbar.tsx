@@ -3,10 +3,17 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import UserMenu, { type SessionUser } from '@/components/UserMenu'
 import type { Category } from '@/lib/api'
 import { banglaDate } from '@/lib/bn'
 
-export default function Navbar({ categories }: { categories: Category[] }) {
+export default function Navbar({
+  categories,
+  user,
+}: {
+  categories: Category[]
+  user: SessionUser | null
+}) {
   const pathname = usePathname()
   const [today, setToday] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
@@ -53,12 +60,18 @@ export default function Navbar({ categories }: { categories: Category[] }) {
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
-          <Link href="/signin" className="btn btn-sm btn-ghost">
-            সাইন ইন
-          </Link>
-          <Link href="/signup" className="btn btn-sm btn-primary">
-            সাইন আপ
-          </Link>
+          {user ? (
+            <UserMenu user={user} />
+          ) : (
+            <>
+              <Link href="/signin" className="btn btn-sm btn-ghost">
+                সাইন ইন
+              </Link>
+              <Link href="/signup" className="btn btn-sm btn-primary">
+                সাইন আপ
+              </Link>
+            </>
+          )}
         </div>
 
         <button
@@ -101,13 +114,19 @@ export default function Navbar({ categories }: { categories: Category[] }) {
               )
             })}
           </nav>
-          <div className="mt-3 flex gap-2">
-            <Link href="/signin" className="btn btn-sm btn-ghost flex-1">
-              সাইন ইন
-            </Link>
-            <Link href="/signup" className="btn btn-sm btn-primary flex-1">
-              সাইন আপ
-            </Link>
+          <div className="mt-3">
+            {user ? (
+              <UserMenu user={user} stacked />
+            ) : (
+              <div className="flex gap-2">
+                <Link href="/signin" className="btn btn-sm btn-ghost flex-1">
+                  সাইন ইন
+                </Link>
+                <Link href="/signup" className="btn btn-sm btn-primary flex-1">
+                  সাইন আপ
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}
