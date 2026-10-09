@@ -1,12 +1,7 @@
 import Link from 'next/link'
+import ChangeBadge from '@/components/ChangeBadge'
 import type { Product } from '@/lib/api'
-import { formatChange, formatPrice, perUnit } from '@/lib/bn'
-
-const CHANGE_STYLES: Record<Product['change']['dir'], string> = {
-  up: 'text-up bg-up-soft',
-  down: 'text-down bg-down-soft',
-  flat: 'text-flat bg-flat-soft',
-}
+import { formatPrice, perUnit } from '@/lib/bn'
 
 export default function ProductCard({ product }: { product: Product }) {
   return (
@@ -19,11 +14,7 @@ export default function ProductCard({ product }: { product: Product }) {
           <span className="text-3xl" aria-hidden="true">
             {product.image}
           </span>
-          <span
-            className={`badge badge-sm whitespace-nowrap font-medium ${CHANGE_STYLES[product.change.dir]}`}
-          >
-            {formatChange(product.change.dir, product.change.pct)}
-          </span>
+          <ChangeBadge dir={product.change.dir} pct={product.change.pct} />
         </div>
 
         <h3 className="font-semibold text-base-content">{product.nameBn}</h3>
