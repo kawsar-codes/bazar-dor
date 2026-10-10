@@ -3,7 +3,40 @@ import { mongodbAdapter } from 'better-auth/adapters/mongodb'
 import { nextCookies } from 'better-auth/next-js'
 import { MongoClient } from 'mongodb'
 
-const uri = process.env.MONGODB_URI
+/** Reads an environment variable defensively.
+ *
+ *  A value copied straight out of a .env file often still carries its wrapping
+ *  quotes, and dashboards like Vercel's store what you paste verbatim — so
+ *  `MONGODB_URI="mongodb+srv://…"` arrives with the quotes as part of the
+ *  string and every connection fails. Trimming whitespace and stripping a
+ *  matched pair of quotes makes the app forgiving of that very easy mistake. */
+function readEnv(name: string): string | undefined {
+  const raw = process.env[name]
+  if (raw === undefined) return undefined
+
+  let value = raw.trim()
+  const first = value[0]
+  if (value.length >= 2 && (first === '"' || first === "'") && value.endsWith(first)) {
+    value = value.slice(1, -1).trim()
+  }
+
+  return value === '' ? undefined : value
+}
+
+/** The public origin of this deployment.
+ *
+ *  BETTER_AUTH_URL wins when it is set. Otherwise Vercel's own variables give
+ *  the right answer without anyone having to keep a URL in sync by hand. */
+function resolveBaseURL(): string | undefined {
+  const configured = readEnv('BETTER_AUTH_URL')
+  if (configured) return configured
+
+  const vercelHost =
+    readEnv('VERCEL_PROJECT_PRODUCTION_URL') ?? readEnv('VERCEL_URL')
+  return vercelHost ? `https://${vercelHost}` : undefined
+}
+
+const uri = readEnv('MONGODB_URI')
 
 if (!uri) {
   // In production a missing database is a hard failure — fail loudly at boot.
@@ -29,18 +62,16 @@ if (process.env.NODE_ENV !== 'production') globalForMongo.bazarDorMongoClient = 
 function configuredSocialProviders(): BetterAuthOptions['socialProviders'] {
   const providers: NonNullable<BetterAuthOptions['socialProviders']> = {}
 
-  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-    providers.google = {
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    }
+  const googleId = readEnv('GOOGLE_CLIENT_ID')
+  const googleSecret = readEnv('GOOGLE_CLIENT_SECRET')
+  if (googleId && googleSecret) {
+    providers.google = { clientId: googleId, clientSecret: googleSecret }
   }
 
-  if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
-    providers.github = {
-      clientId: process.env.GITHUB_CLIENT_ID,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET,
-    }
+  const githubId = readEnv('GITHUB_CLIENT_ID')
+  const githubSecret = readEnv('GITHUB_CLIENT_SECRET')
+  if (githubId && githubSecret) {
+    providers.github = { clientId: githubId, clientSecret: githubSecret }
   }
 
   return providers
@@ -48,8 +79,8 @@ function configuredSocialProviders(): BetterAuthOptions['socialProviders'] {
 
 export const auth = betterAuth({
   database: mongodbAdapter(client.db(), { client }),
-  secret: process.env.BETTER_AUTH_SECRET,
-  baseURL: process.env.BETTER_AUTH_URL,
+  secret: readEnv('BETTER_AUTH_SECRET'),
+  baseURL: resolveBaseURL(),
   emailAndPassword: {
     enabled: true,
     // The assignment asks for a redirect to the sign-in page after registering,
