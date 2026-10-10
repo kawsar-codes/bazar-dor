@@ -6,11 +6,16 @@ import { toBengaliDigits } from '@/lib/bn'
 
 type Props = { params: Promise<{ slug: string }> }
 
-/** Pre-render the eight known categories; anything else still works, it is just
- *  rendered on demand and falls through to notFound(). */
+/** Pre-render the eight known categories when the API cooperates. If it does
+ *  not, return nothing and let every category render on demand — a slower first
+ *  visit is much better than a failed deploy. */
 export async function generateStaticParams() {
-  const categories = await getCategories()
-  return categories.map((category) => ({ slug: category.slug }))
+  try {
+    const categories = await getCategories()
+    return categories.map((category) => ({ slug: category.slug }))
+  } catch {
+    return []
+  }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

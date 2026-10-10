@@ -51,17 +51,28 @@ export type Category = {
   icon: string
 }
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+/** Tries each base URL, and retries a couple of times with a growing pause.
+ *
+ *  The API rate-limits (429) when a build asks for many pages at once, so a
+ *  short back-off is the difference between a green deploy and a failed one. */
 async function apiGet<T>(path: string): Promise<T> {
   let lastError: unknown
-  for (const base of BASE_URLS) {
-    try {
-      const res = await fetch(`${base}${path}`, { next: { revalidate: REVALIDATE_SECONDS } })
-      if (res.ok) return (await res.json()) as T
-      lastError = new Error(`${res.status} ${res.statusText} for ${base}${path}`)
-    } catch (error) {
-      lastError = error
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    for (const base of BASE_URLS) {
+      try {
+        const res = await fetch(`${base}${path}`, { next: { revalidate: REVALIDATE_SECONDS } })
+        if (res.ok) return (await res.json()) as T
+        lastError = new Error(`${res.status} ${res.statusText} for ${base}${path}`)
+      } catch (error) {
+        lastError = error
+      }
     }
+    if (attempt < 2) await sleep(1000 * (attempt + 1))
   }
+
   throw lastError
 }
 
@@ -69,8 +80,14 @@ export function getAllProducts(): Promise<Product[]> {
   return apiGet<Product[]>('/products')
 }
 
-export function getProductsByCategory(categorySlug: string): Promise<Product[]> {
-  return apiGet<Product[]>(`/products?category=${encodeURIComponent(categorySlug)}`)
+/** Filters the full list rather than calling /products?category=…
+ *
+ *  Every category page would otherwise be its own URL, and pre-rendering all
+ *  eight at build time tripped the API's rate limit. Reusing /products means
+ *  Next's data cache serves them all from one response. */
+export async function getProductsByCategory(categorySlug: string): Promise<Product[]> {
+  const products = await getAllProducts()
+  return products.filter((p) => p.category === categorySlug)
 }
 
 /** The API's single-product endpoint takes a numeric id, but our routes use the
