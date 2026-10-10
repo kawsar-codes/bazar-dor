@@ -75,7 +75,7 @@ variables are set, so the site runs fine with email/password alone.
 ## Data Source
 
 All product data comes from the assignment's API:
-`https://api.api-store.workers.dev/api/bazardor` — 33 products across 8 categories, each with
+`https://openapi.programming-hero.com/api/bazardor` — 33 products across 8 categories, each with
 twelve per-market price ranges.
 
 `src/lib/api.ts` is written so that a flaky API never takes the site down. Each request tries

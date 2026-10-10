@@ -3,10 +3,11 @@ import fallbackProducts from '@/data/fallback-products.json'
 
 /** Data layer for the Bazardor API.
  *
- *  The assignment provides two base URLs. We try the first and fall back to the
- *  second if it fails, so a single outage does not take the site down. */
+ *  The assignment provides several base URLs. We try them in order, so one
+ *  host going down does not take the site with it. */
 
 const BASE_URLS = [
+  'https://openapi.programming-hero.com/api/bazardor',
   'https://api.api-store.workers.dev/api/bazardor',
   'https://api.abcz.workers.dev/api/bazardor',
 ]
