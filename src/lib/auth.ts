@@ -15,10 +15,18 @@ function readEnv(name: string): string | undefined {
   if (raw === undefined) return undefined
 
   let value = raw.trim()
+
+  // A whole .env line pasted into a dashboard keeps its `NAME=` prefix.
+  if (value.startsWith(`${name}=`)) value = value.slice(name.length + 1).trim()
+
+  // ...and its wrapping quotes, which the dashboard stores verbatim.
   const first = value[0]
   if (value.length >= 2 && (first === '"' || first === "'") && value.endsWith(first)) {
     value = value.slice(1, -1).trim()
   }
+
+  // Strip once more in case the line was pasted as `NAME="value"`.
+  if (value.startsWith(`${name}=`)) value = value.slice(name.length + 1).trim()
 
   return value === '' ? undefined : value
 }
@@ -46,6 +54,15 @@ if (!uri) {
     throw new Error('MONGODB_URI is not set. Add it to the environment before deploying.')
   }
   console.warn('[auth] MONGODB_URI is not set — sign in and sign up will not work yet.')
+}
+
+if (uri && !/^mongodb(\+srv)?:\/\//.test(uri)) {
+  // Fail with a message that names the real problem. Left unchecked, the driver
+  // throws while this module is first imported, which Next.js turns into an
+  // empty 500 on every auth request with nothing useful in the logs.
+  console.error(
+    `[auth] MONGODB_URI does not start with mongodb:// or mongodb+srv:// — it begins with "${uri.slice(0, 12)}". Paste only the connection string itself, with no variable name and no quotes.`,
+  )
 }
 
 const connectionString = uri ?? 'mongodb://127.0.0.1:27017/bazar-dor-unconfigured'
