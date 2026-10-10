@@ -1,4 +1,4 @@
-import { getAllProducts, type Product } from '@/lib/api'
+import { getAllProducts, safeList, type Product } from '@/lib/api'
 import { formatChange, priceWithUnit } from '@/lib/bn'
 
 const CHANGE_COLOR: Record<Product['change']['dir'], string> = {
@@ -28,7 +28,8 @@ function TickerItems({ products, copy }: { products: Product[]; copy: string }) 
 }
 
 export default async function PriceTicker() {
-  const products = await getAllProducts()
+  const products = await safeList(getAllProducts)
+  if (products.length === 0) return null
 
   return (
     <div className="overflow-hidden border-b border-base-300 bg-base-200">

@@ -9,7 +9,7 @@ type Props = { params: Promise<{ slug: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const product = await getProductBySlug(slug)
+  const product = await getProductBySlug(slug).catch(() => null)
   if (!product) return { title: 'পণ্য পাওয়া যায়নি — বাজার দর' }
   return {
     title: `${product.nameBn} — আজকের দাম | বাজার দর`,
@@ -58,7 +58,9 @@ export default async function ProductDetailPage({ params }: Props) {
     redirect(`/signin?reason=protected&next=${encodeURIComponent(`/product/${slug}`)}`)
   }
 
-  const product = await getProductBySlug(slug)
+  // A failed API call becomes a 404 rather than a 500 — a missing page is a
+  // far better experience than a crashed one.
+  const product = await getProductBySlug(slug).catch(() => null)
   if (!product) notFound()
 
   const stats = marketStats(product)

@@ -53,10 +53,17 @@ export type Category = {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
+/** The last successful response for each path.
+ *
+ *  Serverless instances are short-lived, but within one instance this lets a
+ *  brief API outage serve slightly stale prices instead of a 500 page. */
+const lastGood = new Map<string, unknown>()
+
 /** Tries each base URL, and retries a couple of times with a growing pause.
  *
  *  The API rate-limits (429) when a build asks for many pages at once, so a
- *  short back-off is the difference between a green deploy and a failed one. */
+ *  short back-off is the difference between a green deploy and a failed one.
+ *  If everything fails we fall back to the last good response for this path. */
 async function apiGet<T>(path: string): Promise<T> {
   let lastError: unknown
 
@@ -64,7 +71,11 @@ async function apiGet<T>(path: string): Promise<T> {
     for (const base of BASE_URLS) {
       try {
         const res = await fetch(`${base}${path}`, { next: { revalidate: REVALIDATE_SECONDS } })
-        if (res.ok) return (await res.json()) as T
+        if (res.ok) {
+          const data = (await res.json()) as T
+          lastGood.set(path, data)
+          return data
+        }
         lastError = new Error(`${res.status} ${res.statusText} for ${base}${path}`)
       } catch (error) {
         lastError = error
@@ -73,7 +84,26 @@ async function apiGet<T>(path: string): Promise<T> {
     if (attempt < 2) await sleep(1000 * (attempt + 1))
   }
 
+  if (lastGood.has(path)) {
+    console.warn(`[api] serving stale data for ${path}`, lastError)
+    return lastGood.get(path) as T
+  }
+
   throw lastError
+}
+
+/** Never throws: returns an empty list when the API cannot be reached.
+ *
+ *  The navbar and the ticker sit in the root layout, so an unhandled error
+ *  there would turn every single page into a 500. Degrading to an empty list
+ *  keeps the site standing. */
+export async function safeList<T>(load: () => Promise<T[]>): Promise<T[]> {
+  try {
+    return await load()
+  } catch (error) {
+    console.error('[api] request failed, rendering without data', error)
+    return []
+  }
 }
 
 export function getAllProducts(): Promise<Product[]> {

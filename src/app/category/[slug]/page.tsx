@@ -20,7 +20,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const category = await getCategoryBySlug(slug)
+  const category = await getCategoryBySlug(slug).catch(() => null)
   if (!category) return { title: 'ক্যাটাগরি পাওয়া যায়নি — বাজার দর' }
   return {
     title: `${category.nameBn} — আজকের দাম | বাজার দর`,
@@ -31,10 +31,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function CategoryPage({ params }: Props) {
   const { slug } = await params
 
-  const category = await getCategoryBySlug(slug)
+  const category = await getCategoryBySlug(slug).catch(() => null)
   if (!category) notFound()
 
-  const products = await getProductsByCategory(slug)
+  const products = await getProductsByCategory(slug).catch(() => [])
   if (products.length === 0) notFound()
 
   return (

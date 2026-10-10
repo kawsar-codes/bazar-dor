@@ -4,7 +4,7 @@ import { Toaster } from 'react-hot-toast'
 import Footer from '@/components/Footer'
 import Navbar from '@/components/Navbar'
 import PriceTicker from '@/components/PriceTicker'
-import { getCategories } from '@/lib/api'
+import { getCategories, safeList } from '@/lib/api'
 import { getSession } from '@/lib/session'
 import './globals.css'
 
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 }
 
 export default async function RootLayout({ children }: LayoutProps<'/'>) {
-  const [categories, session] = await Promise.all([getCategories(), getSession()])
+  const [categories, session] = await Promise.all([safeList(getCategories), getSession()])
 
   return (
     <html lang="bn" className={`${bangla.variable} h-full antialiased`}>
