@@ -5,7 +5,7 @@ today's price of rice, vegetables, fish, meat, pulses, oil and spices across twe
 Bangladesh, which items went up or down since yesterday, and how each item's price has moved
 over the last week and month — all in Bengali, with prices written in Bengali numerals.
 
-- **Live site:** _add after deploying_
+- **Live site:** https://bazar-dor-vert.vercel.app
 - **Repository:** https://github.com/kawsar-codes/bazar-dor
 
 ## Technologies Used
@@ -76,8 +76,14 @@ variables are set, so the site runs fine with email/password alone.
 
 All product data comes from the assignment's API:
 `https://api.api-store.workers.dev/api/bazardor` — 33 products across 8 categories, each with
-twelve per-market price ranges. `src/lib/api.ts` falls back to the alternative base URL if the
-first one fails.
+twelve per-market price ranges.
+
+`src/lib/api.ts` is written so that a flaky API never takes the site down. Each request tries
+the primary base URL, then the alternative one, retrying a few times with a growing pause and a
+six-second timeout per attempt. If every attempt fails it serves the last successful response,
+and if there is none it falls back to `src/data/*.json` — a snapshot of the API captured while
+it was healthy. The live API is always tried first; the snapshot only ever appears when the API
+is unreachable (its free Cloudflare Worker rate-limits under load).
 
 ## Project Structure
 

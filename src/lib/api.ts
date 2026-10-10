@@ -1,3 +1,6 @@
+import fallbackCategories from '@/data/fallback-categories.json'
+import fallbackProducts from '@/data/fallback-products.json'
+
 /** Data layer for the Bazardor API.
  *
  *  The assignment provides two base URLs. We try the first and fall back to the
@@ -59,6 +62,16 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
  *  brief API outage serve slightly stale prices instead of a 500 page. */
 const lastGood = new Map<string, unknown>()
 
+/** A snapshot of the API taken while it was healthy, committed to the repo.
+ *
+ *  The live API is the source of truth and is always tried first. This is the
+ *  last resort: the free Cloudflare Worker behind it rate-limits, and a market
+ *  price site that shows nothing at all is worse than one showing a snapshot. */
+const FALLBACKS: Record<string, unknown> = {
+  '/products': fallbackProducts,
+  '/categories': fallbackCategories,
+}
+
 /** Tries each base URL, and retries a couple of times with a growing pause.
  *
  *  The API rate-limits (429) when a build asks for many pages at once, so a
@@ -70,7 +83,11 @@ async function apiGet<T>(path: string): Promise<T> {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     for (const base of BASE_URLS) {
       try {
-        const res = await fetch(`${base}${path}`, { next: { revalidate: REVALIDATE_SECONDS } })
+        const res = await fetch(`${base}${path}`, {
+          next: { revalidate: REVALIDATE_SECONDS },
+          // Bound each attempt so a hanging API cannot stall the whole page.
+          signal: AbortSignal.timeout(6000),
+        })
         if (res.ok) {
           const data = (await res.json()) as T
           lastGood.set(path, data)
@@ -87,6 +104,11 @@ async function apiGet<T>(path: string): Promise<T> {
   if (lastGood.has(path)) {
     console.warn(`[api] serving stale data for ${path}`, lastError)
     return lastGood.get(path) as T
+  }
+
+  if (path in FALLBACKS) {
+    console.warn(`[api] API unavailable, serving the bundled snapshot for ${path}`, lastError)
+    return FALLBACKS[path] as T
   }
 
   throw lastError
